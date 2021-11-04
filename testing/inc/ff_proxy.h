@@ -5,6 +5,7 @@
 #include <stdio.h> //FILE
 #include <stdint.h> //uintN_t
 #include <unistd.h> //time delay
+#include <sys/stat.h> 
 
 /* File access mode and open method flags (3rd argument of f_open) */
 #define FA_READ 0x01

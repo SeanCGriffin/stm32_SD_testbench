@@ -10,27 +10,28 @@
 #include "hs_types.h"
 #include "local_main.h"
 #include "hs_streamer.h"
+#include "hs_unit_tests.h"
 
 SystemTime s = {0};
 uint32_t sys_seconds = 0xFF000000;
 uint16_t sys_subseconds = 0;
 uint16_t dummy_time = 0xF0F0;
 
-//Writer file handlers
-extern bool handler_active[NUM_PMT];
-extern FIL handlers[NUM_PMT];
-extern char live_filenames[NUM_PMT][256];
-extern bool daq_enabled;
+// //Writer file handlers
+// extern bool handler_active[NUM_PMT];
+// extern FIL handlers[NUM_PMT];
+// extern char live_filenames[NUM_PMT][256];
+// extern bool daq_enabled;
 
-//Writer data externs
-extern PayloadType_t current_hit_type;
-extern SPEPacket *spep;
-extern MPEPacket *mpep;
+// //Writer data externs
+// extern PayloadType_t current_hit_type;
+// extern SPEPacket *spep;
+// extern MPEPacket *mpep;
 
-//Reader externs
-extern PayloadType_t mrr_hit_type;
-extern SPEHit *mrr_speh; //Most recent read SPE hit.
-extern MPEHit *mrr_mpeh; //Most recent read MPE hit.
+// //Reader externs
+// extern PayloadType_t mrr_hit_type;
+// extern SPEHit *mrr_speh; //Most recent read SPE hit.
+// extern MPEHit *mrr_mpeh; //Most recent read MPE hit.
 
 void print(const char *fmt, ...) {
   static char buffer[256];
@@ -51,10 +52,7 @@ SystemTime *get_system_time() {
 
 int main(void) {
 
-  u16 nsamples = 300;
-  u8 sample_buf[nsamples];
-  for (int i = 0; i < nsamples; i++)
-    sample_buf[i] = 65 + (i % (40));
+  init_debug_array();
 
   // FIL *fil = NULL;
   // FRESULT fres;
@@ -72,9 +70,9 @@ int main(void) {
   sprintf(test_filename, "hitspool/test.txt");
   FIL fp;
   // fp = *fopen("test.txt", "w+");
-  BYTE mode = get_mode_from_str("w+");
+  BYTE mode = get_mode_from_str("w");
   print("mode: %x\t desired: %x\r\n", mode,
-        FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
+        FA_CREATE_ALWAYS | FA_WRITE );
 
   // fflush(stdout);
   f_open(&fp, test_filename, get_mode_from_str("w+"));
@@ -144,7 +142,7 @@ int main(void) {
   u8 PMT = 2;
 
 
-  UNIT_write_loop(nloops, PMT, 100);
+  UNIT_write_loop(nloops, PMT, 128);
   UNIT_read_loop(nloops, PMT);
 
   print("Done.\r\n");

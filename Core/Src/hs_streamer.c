@@ -22,11 +22,11 @@
 	#include "ff.h"
 #endif
 
-
-#include <hs_streamer.h>
 #include "types.h"
 #include "hs_types.h"
-#include "hs_readback.h"
+#include "hs_streamer.h"
+
+
 
 extern void print(const char *fmt, ...);
 extern SystemTime* get_system_time();
@@ -96,10 +96,18 @@ SPEPacket *spep; //Active SPEPacket write struct.
 MPEPacket *mpep; //Active MPEPacket write struct.
 WUBPacket *wubp; //Active WuBase buffer write struct.
 
-
 PayloadType_t current_hit_type = PL_INVALID; //Identifier.
 PayloadType_t last_hit_type = PL_INVALID;
 
+extern void print(const char *fmt, ...);
+
+
+u8 sample_buf[n_debug_samples];
+
+void init_debug_array(){
+	for(int i = 0; i < n_debug_samples;i++)
+	sample_buf[i] = i;
+}
 //Initialize the hit buffers
 void init_hit_buffers(){
 
@@ -199,14 +207,14 @@ SPEPacket* generate_dummy_SPEPacket(u8 PMT, u16 dummy_charge){
 //FIXME: factor of 1.5 for ADC 12 bits. Need to fix this.
 MPEPacket* allocate_MPEPacket(uint16_t nsamples){
 	MPEPacket* m;
-	m = malloc(sizeof(MPEPacket) + sizeof(uint8_t)*nsamples);
+	m = (MPEPacket*)malloc(sizeof(MPEPacket) + sizeof(uint8_t)*nsamples);
 	m->hit.nsamples=nsamples;
 	return m;
 }
 
-MPEPacket* generate_dummy_MPEPacket(u8 PMT, u16 nsamples, u8* buffer){
+MPEPacket* generate_dummy_MPEPacket(u8 PMT, u16 nsamples){
 	MPEPacket* m = allocate_MPEPacket(nsamples);
-	memcpy(m->hit.waveforms, buffer, nsamples);
+	memcpy(m->hit.waveforms, sample_buf, nsamples);
 	m->hit.type = PL_MPE;
 	m->PMT = PMT;
 	m->hit.nsamples = nsamples;
@@ -216,7 +224,7 @@ MPEPacket* generate_dummy_MPEPacket(u8 PMT, u16 nsamples, u8* buffer){
 
 WUBPacket* allocate_WUBPacket(uint16_t size){
 	WUBPacket* w;
-	w = malloc(sizeof(WUBPacket) + sizeof(uint8_t)*size);
+	w = (WUBPacket*)malloc(sizeof(WUBPacket) + sizeof(uint8_t)*size);
 	w->hits.size=size;
 	return w;
 }
@@ -354,13 +362,15 @@ u32 check_and_write_buffer(u8 PMT, bool force){
 		//do some writing things
 		buffer_full[PMT] = TRUE;
 		handler_active[PMT] = TRUE;
-		f_op_res[PMT] = f_write(&file_handlers[PMT], write_buff[PMT], n_consumed[PMT], &n_written[PMT]);
+		f_op_res[PMT] = f_write(&file_handlers[PMT], write_buff[PMT], 
+								n_consumed[PMT], &n_written[PMT]);
 
 		if(f_op_res[PMT] != FR_OK){
 			print("Error writing file %s!\r\n", live_filenames[PMT]);
 		}
 
 		print("written: now: 0x%04X\ttot: 0x%04X\r\n", n_consumed[PMT], n_written[PMT]);
+		fflush(stdout);
 		n_written_tot[PMT] += n_written[PMT];
 		total_bytes_written += n_written[PMT];
 
@@ -426,82 +436,3 @@ u32 add_hit_to_buffer(){
 	return FR_OK;
 }
 
-
-
-
-
-
-
-
-
-GSTATUS UNIT_read_loop(u32 nloops, u8 PMT, u16 nsamples){
-	u8 sample_buf[nsamples];
-	for(int i = 0; i < nsamples;i++)
-		sample_buf[i] = i;
-
-	print("\n\nEntering test data readback loop.\r\n");
-	print("----------------------------\r\n");
-
-	//Pattern for readback should be 10 SPEs
-	//Followed by 2 MPEs.
-	//And repeat.
-
-	while(1){
-
-		for(int j = 0; j < 10; j++){
-			read_next_hit(&file_handlers[j]);
-			switch(mrr_hit_type){
-				case PL_SPE:
-					if(mrr_speh->tdc != mrr_speh->subsample_t)
-						return G_NOTOK;
-					break;
-				case PL_MPE:
-
-				default:
-					return G_NOTOK;
-
-			}
-		}
-
-	}
-
-	return G_OK;
-
-}
-
-
-
-GSTATUS UNIT_write_loop(u32 nloops, u8 PMT, u16 nsamples){
-	u8 sample_buf[nsamples];
-	for(int i = 0; i < nsamples;i++)
-		sample_buf[i] = i;
-
-	print("\n\nEntering test data generation loop.\r\n");
-	print("----------------------------\r\n");
-
-	int nhits_gen = 0;
-	for(int i = 0; i < nloops; i++){
-
-		for(int j = 0; j < 10; j++){
-			spep = generate_dummy_SPEPacket(2, 0x400);
-			current_hit_type=PL_SPE;
-			add_hit_to_buffer();
-		}
-
-		for(int j = 0; j < 2; j++){
-			mpep = generate_dummy_MPEPacket(PMT, nsamples, sample_buf);
-			current_hit_type=PL_MPE;
-			add_hit_to_buffer();
-		}
-
-		check_and_write_buffer(PMT, TRUE);
-
-
-		print("----------------------------\r\n");
-	}
-
-	//closeout_file_buffers();
-	print("Total hits generated: 0x%8lX\r\n"
-		  "Total bytes written:  0x%8lX\r\n", nhits_gen, total_bytes_written);
-	return GOK;
-}

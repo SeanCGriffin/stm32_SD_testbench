@@ -22,17 +22,17 @@ typedef enum {
 extern const char* PLNameText[];
 
 
-typedef struct {
-	PayloadType_t type : 4; //could reduce to 2, and add bits to length in future.
-	uint16_t payload_length : 12;
-} __attribute__((packed)) PacketHeader; //Packs into 2 bytes.
+// typedef struct PacketHeader{
+// 	PayloadType_t type : 4; //could reduce to 2, and add bits to length in future.
+// 	uint16_t payload_length : 12;
+// } __attribute__((packed)) PacketHeader; //Packs into 2 bytes.
 
-typedef struct {
-	PacketHeader header;
-	uint8_t timestamp[6]; //48 bits
-} __attribute__((packed)) TimestampPacket;
+// typedef struct TimestampPacket{
+// 	PacketHeader header;
+// 	uint8_t timestamp[6]; //48 bits
+// } __attribute__((packed)) TimestampPacket;
 
-typedef struct {
+typedef struct SPEHit{
 	PayloadType_t type  : 8;  //SPE, MPE, timestamp, other
 	u16 charge     : 12; //extracted charge
 	u8 tdc         : 6;  //TDC value
@@ -42,7 +42,7 @@ typedef struct {
 	//Total size: 56 bits / 7 bytes
 } __attribute__((packed)) SPEHit;
 
-typedef struct {
+typedef struct MPEHit{
 	PayloadType_t type : 8;
 	u16 nsamples : 12;  //Good to 512 samples per channel, assuming 12-bits.
 	u16 launch_t : 16;  //ADC launch time (IST)
@@ -68,7 +68,7 @@ typedef struct {
 #define MPEBaseSize sizeof(MPEHit)
 #define SPEBaseSize sizeof(SPEHit)
 
-typedef struct {
+typedef struct hit_buffer{
 	PayloadType_t type : 8;
 	u16 size : 12;
 	u8 padding: 4;
@@ -76,19 +76,19 @@ typedef struct {
 
 }__attribute__((packed)) HitBuffer;
 
-typedef struct {
+typedef struct SPEPacket{
 	uint8_t PMT;
 	uint32_t trecv;
 	SPEHit hit;
 } SPEPacket;
 
-typedef struct {
+typedef struct mpe_packet{
 	uint8_t PMT;
 	uint32_t trecv;
 	MPEHit hit;
 } MPEPacket;
 
-typedef struct {
+typedef struct wub_packet{
 	uint8_t PMT;
 	uint32_t trecv;
 	HitBuffer hits;

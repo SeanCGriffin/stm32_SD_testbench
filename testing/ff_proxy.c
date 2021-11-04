@@ -1,17 +1,13 @@
-
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
-#include <sys/stat.h>
-#include <assert.h>
-#include <libgen.h>
+#include <errno.h> //Erno
+#include <sys/stat.h> //mode_t
+#include <assert.h> //assert
 
 #include "local_main.h"
 #include "ff_proxy.h"
 
 extern void print(const char *fmt, ...); 
-
-extern char* strdupa(const char*);
 
 uint64_t proxy_drive_size = 32000000000; //32 GB in B
 uint64_t drive_space_consumed = 0;
@@ -43,8 +39,8 @@ int mkpath(char* file_path, mode_t mode) {
 }
 
 FRESULT f_open(FIL *fp, char *path, BYTE mode) {
-  if(mode && FA_READ == 0)
-    mkpath(path, 0755);
+  //if(mode && FA_READ == 0)
+  mkpath(path, 0755);
 
   char strmode[10];
   get_mode_from_byte(strmode, mode);
@@ -56,7 +52,7 @@ FRESULT f_open(FIL *fp, char *path, BYTE mode) {
     print("ERROR OPENING FILE: %s\r\n", strerror(errno));
     return FR_NOT_READY;    
   } else{
-    print("File opened ok\r\n");
+    //print("File opened ok\r\n");
     return FR_OK;
   }
 
@@ -68,8 +64,9 @@ FRESULT f_write(FIL *fp, void *buff, UINT btw, UINT *bw) {
   if (fp == NULL) {
     return FR_NOT_READY;
   }
-
+  printf("About to write...\r\n");
   *bw = fwrite(buff, 1, btw, fp);
+  printf("Done.\r\n");
   if (*bw == btw)
     return FR_OK;
   else
@@ -87,7 +84,7 @@ FRESULT f_read (
   FRESULT res;
   *br = fread(buff, 1, btr, fp);
 
-  if(btr == br)
+  if(btr == *br)
     return FR_OK;
   else
     return FR_DISK_ERR;

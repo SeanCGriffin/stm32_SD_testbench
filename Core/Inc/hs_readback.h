@@ -5,8 +5,8 @@
  *      Author: sgriffin
  */
 
-#ifndef INC_HS_READBACK_H_
-#define INC_HS_READBACK_H_
+#ifndef __HS_READBACK_H_
+#define __HS_READBACK_H_
 
 #ifdef PLATFORM_STANDALONE
 	#pragma message( "Compiling " __FILE__ " for DESKTOP")
@@ -19,7 +19,11 @@
 
 #include "hs_types.h"
 
+extern PayloadType_t mrr_hit_type;
+extern SPEHit *mrr_speh;
+extern MPEHit *mrr_mpeh;
+
 FRESULT open_source(char* path, BYTE mode);//FIXME: Probably meaningless
 PayloadType_t read_next_hit(FIL *f);
 
-#endif /* INC_HS_READBACK_H_ */
+#endif /* __HS_READBACK_H_ */

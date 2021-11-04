@@ -6,13 +6,15 @@
  */
 //#include <hs_streamer.h> //FIXME: Maybe move the struct typedefs to types.
 
+#define __HS_READBACK_C
+
 #include <stdlib.h> //malloc
 #include <stdio.h>
 #include <string.h> //memcpy
 
 
 #include "hs_readback.h"
-
+#include "hs_streamer.h"
 
 #ifdef PLATFORM_STANDALONE
 	#pragma message( "Compiling " __FILE__ " for DESKTOP")
@@ -22,24 +24,20 @@
 	#include "ff.h"
 #endif
 
-extern void print(const char *fmt, ...);
 
-extern char live_filenames[NUM_PMT][256];
-extern char handler_active[NUM_PMT];
-extern FIL file_handlers[NUM_PMT];
 
 FIL active_file;
-FRESULT f_op_res;
+// FRESULT f_op_res;
 
 PayloadType_t mrr_hit_type = PL_INVALID;
 SPEHit *mrr_speh; //Most recent read SPE hit.
 MPEHit *mrr_mpeh; //Most recent read MPE hit.
 
-FRESULT open_source(char* path, BYTE mode){
-	f_op_res = f_open(&active_file, path, mode);
+// FRESULT open_source(char* path, BYTE mode){
+// 	f_op_res = f_open(&active_file, path, mode);
 
-	return f_op_res;
-}
+// 	return f_op_res;
+// }
 
 
 
@@ -67,7 +65,7 @@ PayloadType_t read_next_hit(FIL *f){
 	br_tot += br;
 
 	u8 header_bits = buff[0];
-	PayloadType_t pl_type = (header_bits)&0xF;
+	PayloadType_t pl_type = (PayloadType_t)((header_bits)&0xF)	;
 //	print("header byte: %d\r\n", header_bits);
 //	print("PayloadType_t: %d\r\n", pl_type);
 //	print("PayloadType: %s\r\n", PLNameText[pl_type]);
