@@ -19,10 +19,13 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
+#include <hs_streamer.h>
 #include "main.h"
 #include "stm32h7xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "ff.h"
+#include "file_IO.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,9 +59,13 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-
+extern TIM_HandleTypeDef htim5;
 /* USER CODE BEGIN EV */
+extern FIL* handlers[NUM_PMT];
+extern char live_filenames[NUM_PMT][256];
 
+extern uint8_t daq_enabled;
+extern uint32_t sys_seconds;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -199,7 +206,58 @@ void SysTick_Handler(void)
 /* please refer to the startup file (startup_stm32h7xx.s).                    */
 /******************************************************************************/
 
+/**
+  * @brief This function handles TIM5 global interrupt.
+  */
+void TIM5_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM5_IRQn 0 */
+
+  /* USER CODE END TIM5_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim5);
+  /* USER CODE BEGIN TIM5_IRQn 1 */
+
+  /* USER CODE END TIM5_IRQn 1 */
+}
+
 /* USER CODE BEGIN 1 */
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+
+
+
+  if(htim->Instance == TIM5){
+	  sys_seconds += 1;
+
+//	 FRESULT fres;
+//	 //char filename_buffer[256];
+//	 if(daq_enabled){
+//		 print("Updating file handlers:\r\n");
+//		 for(int i = 0; i < NUM_PMT; i++){
+//			 //sprintf(filename_buffer, "/hitspool/PMT%02d/0x%08lx.spool", i, sys_seconds);
+//
+//			 char* filename = live_filenames[i];
+//			 FIL* livefile = handlers[i];
+//
+//			 print("%s\r\n",filename);
+//
+//			 if(livefile != NULL){
+//				 close_file(livefile);
+//			 }
+//
+//			 fres = open_file(livefile, filename, FA_CREATE_ALWAYS);
+//
+//
+//		 }
+//
+		 HAL_GPIO_TogglePin(BLUE_LED_PORT, BLUE_LED_PIN);
+//
+//	 }
+
+
+  }
+
+}
 
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
