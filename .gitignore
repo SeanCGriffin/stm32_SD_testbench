@@ -2,6 +2,10 @@
 *.bin
 *.elf 
 
+# Data files
+*.spool
+*test.txt
+
 # OS X junk
 *.DS_Store
 
