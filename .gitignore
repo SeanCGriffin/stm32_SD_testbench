@@ -6,6 +6,10 @@
 *.spool
 *test.txt
 
+# other
+testing/obj/
+testing/hitspool/
+
 # OS X junk
 *.DS_Store
 
