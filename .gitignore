@@ -9,6 +9,7 @@
 # other
 testing/obj/
 testing/hitspool/
+testing/test_streamer
 
 # OS X junk
 *.DS_Store
