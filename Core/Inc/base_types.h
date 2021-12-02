@@ -5,8 +5,8 @@
  *      Author: sgriffin
  */
 
-#ifndef INC_TYPES_H_
-#define INC_TYPES_H_
+#ifndef INC_BASE_TYPES_H_
+#define INC_BASE_TYPES_H_
 
 
 #include <stdint.h>
@@ -28,6 +28,12 @@ typedef enum {
 	G_NOTOK
 } G_STATUS;
 
+typedef enum {
+	STREAMER_RC_OK, 
+	STREAMER_RC_EOF,
+	STREAMER_RC_DISK_ERR
+} STREAMER_RC;
+
 typedef struct SystemTime{
 //	uint64_t full;
 //	struct {
@@ -39,4 +45,4 @@ typedef struct SystemTime{
 } SystemTime;
 
 
-#endif /* INC_TYPES_H_ */
+#endif /* INC_BASE_TYPES_H_ */

@@ -25,12 +25,14 @@ uint8_t	BSP_PlatformIsDetected(void) {
         status = SD_NOT_PRESENT;
     }
     /* USER CODE BEGIN 1 */
+
     //Stupid that the code is duplicated here but the code generator keps overwriting my fix.
     if(HAL_GPIO_ReadPin(SD_DETECT_GPIO_PORT, SD_DETECT_PIN) != GPIO_PIN_SET)
     {
         status = SD_NOT_PRESENT;
     }
     return (HAL_GPIO_ReadPin(SD_DETECT_GPIO_PORT, SD_DETECT_PIN) == GPIO_PIN_SET) ? SD_PRESENT : SD_NOT_PRESENT;
+
     /* USER CODE END 1 */
     return status;
 }

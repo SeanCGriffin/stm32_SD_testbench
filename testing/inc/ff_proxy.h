@@ -1,11 +1,9 @@
 #ifndef __FF_PROXY_H
 #define __FF_PROXY_H
 
-
+#include <sys/stat.h>
 #include <stdio.h> //FILE
 #include <stdint.h> //uintN_t
-#include <unistd.h> //time delay
-#include <sys/stat.h> 
 
 /* File access mode and open method flags (3rd argument of f_open) */
 #define FA_READ 0x01
@@ -65,6 +63,18 @@ typedef enum {
   FR_INVALID_PARAMETER    /* (19) Given parameter is invalid */
 } FRESULT;
 
+// // /* File information structure (FILINFO) */
+
+// typedef struct {
+//   FSIZE_t fsize;      /* File size */
+//   WORD  fdate;      /* Modified date */
+//   WORD  ftime;       Modified time 
+//   BYTE  fattrib;    /* File attribute */
+//   TCHAR altname[13];      /* Alternative file name */
+//   TCHAR fname[_MAX_LFN + 1];  /* Primary file name */
+// } FILINFO;
+
+
 #define FA_READ       0x01
 #define FA_WRITE      0x02
 #define FA_OPEN_EXISTING  0x00
@@ -73,12 +83,18 @@ typedef enum {
 #define FA_OPEN_ALWAYS    0x10
 #define FA_OPEN_APPEND    0x30
 
+long GetAvailableSpace(const char* path);
+long GetTotalSpace(const char* path);
+
 
 int mkpath(char* file_path, mode_t mode);
 FRESULT f_open(FIL *fp, char *path, BYTE mode);
 FRESULT f_write(FIL *fp, void *buff, UINT btw, UINT *bw);
 FRESULT f_read (FIL* fp, void* buff, UINT btr, UINT* br);
 FRESULT f_close (FIL* fp);    
+FRESULT f_sync(FIL *fp);
+//FRESULT f_stat(const char* path, FILINFO *fno);
+
 
 void get_mode_from_byte(char* cmode, BYTE mode);
 BYTE get_mode_from_str(char* cmode);

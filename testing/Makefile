@@ -1,66 +1,120 @@
-#
-# In order to execute this "Makefile" just type "make"
-#	A. Delis (ad@di.uoa.gr)
-#
+TARGET_EXEC ?= test_streamer
 
-SRCDIR = ../Core/Src
-OBJDIR = obj/
+BUILD_DIR ?= ./build
+SRC_DIRS ?= .../Core/Src
+
 INCDIR = ../Core/Inc
-INCLUDES = -I $(INCDIR) -I inc
 
-OBJS	= $(OBJDIR)/main.o\
-		  $(OBJDIR)/hs_streamer.o\
-		  $(OBJDIR)/ff_proxy.o\
-		  $(OBJDIR)/hs_readback.o\
-		  $(OBJDIR)/hs_unit_tests.o
-SOURCE	= main.c\
-		  $(SRCDIR)/streamer.c
-#HEADER	= $(INCDIR)/streamer.h
-OUT	= test_streamer
-CC	 = g++
-FLAGS	 = -g -c -Wall $(INCLUDES) -DPLATFORM_STANDALONE
-LFLAGS	 = 
-# -g option enables debugging mode 
-# -c flag generates object code for separate files
+SRCS := main.cpp\
+		ff_proxy.c\
+		printer.c\
+		streamer.cpp\
+		packet.cpp\
 
+OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
+DEPS := $(OBJS:.o=.d)
 
-all: $(OBJS)
-	$(CC) -g $(OBJS) -o $(OUT) $(LFLAGS)
+INC_DIRS := inc\
+			$(INCDIR)
+INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-$(OBJS) : | $(OBJDIR)
+CC	 = gcc
+CXX	 = g++
 
-$(OBJDIR):
-	mkdir -p $(OBJDIR)
+FLAGS ?= -DPLATFORM_STANDALONE 
+# CPPFLAGS ?= $(INC_FLAGS) -DPLATFORM_STANDALONE
+CXXFLAGS ?= $(INC_FLAGS) $(FLAGS) 
+CFLAGS ?= $(INC_FLAGS) $(FLAGS) -lstdc++
 
-test_streamer: $(OBJS)
-	$(CC) -g $(OBJS) -o $(OUT)
+$(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
+	@echo $(CXX) $(OBJS) -o $@ $(FLAGS)
+	$(CXX) $(OBJS) -o $@ $(FLAGS)
 
-# create/compile the individual files >>separately<<
-$(OBJDIR)/main.o: main.c
-	@echo $(FLAGS)
-	$(CC) $(FLAGS) main.c -o $@
+# # assembly
+# $(BUILD_DIR)/%.s.o: %.s
+# 	$(MKDIR_P) $(dir $@)
+# 	@echo $(AS) $(ASFLAGS) -c $< -o $@
+# 	$(AS) $(ASFLAGS) -c $< -o $@
 
-$(OBJDIR)/hs_streamer.o: $(SRCDIR)/hs_streamer.c
-	@echo $(FLAGS)
-	$(CC) $(FLAGS) $(SRCDIR)/hs_streamer.c -o $@
+# c source
+$(BUILD_DIR)/%.c.o: %.c
+	$(MKDIR_P) $(dir $@)
+	@echo $(CC) $(CFLAGS) -c $< -o $@ 
+	$(CC) $(CFLAGS) -c $< -o $@ 
 
-$(OBJDIR)/ff_proxy.o: ff_proxy.c
-	@echo $(FLAGS)
-	$(CC) $(FLAGS) ff_proxy.c -o $@
-
-$(OBJDIR)/hs_readback.o: $(SRCDIR)/hs_readback.c
-	@echo $(FLAGS)
-	$(CC) $(FLAGS) $(SRCDIR)/hs_readback.c -o $@	
-
-$(OBJDIR)/hs_unit_tests.o: $(SRCDIR)/hs_unit_tests.c
-	@echo $(FLAGS)
-	$(CC) $(FLAGS) $(SRCDIR)/hs_unit_tests.c -o $@	
+# c++ source
+$(BUILD_DIR)/%.cpp.o: %.cpp
+	$(MKDIR_P) $(dir $@)
+	@echo $(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@ 
 
 
-# clean house
+.PHONY: clean
+
 clean:
-	rm -f $(OBJS) $(OUT)
+	$(RM) -r $(BUILD_DIR)
+
+-include $(DEPS)
+
+MKDIR_P ?= mkdir -p
 
 # run the program
-run: $(OUT)
-	./$(OUT)
+.PHONY: run
+run: $(BUILD_DIR)/$(TARGET_EXEC)
+	./$(BUILD_DIR)/$(TARGET_EXEC)
+	@echo "\n\n"
+	#@echo "File contents:"
+	#@cat hitspool/*/*.spool
+	@echo "File sizes:"
+	@ls -lh hitspool/*/*.spool
+
+
+# SRCDIR = ../Core/Src
+# OBJDIR = obj/
+# INCDIR = ../Core/Inc
+# INCLUDES = -I $(INCDIR) -I inc
+
+# OBJS	= $(OBJDIR)/main.o\
+# 		  $(OBJDIR)/ff_proxy.o
+
+# SOURCE	= main.cpp\
+# 		  $(SRCDIR)/streamer.cpp
+# #HEADER	= $(INCDIR)/streamer.h
+# OUT	= test_streamer
+# CC	 = g++
+# FLAGS	 = -g -c -Wall $(INCLUDES) -DPLATFORM_STANDALONE
+# LFLAGS	 = 
+# # -g option enables debugging mode 
+# # -c flag generates object code for separate files
+
+
+# all: $(OBJS)
+# 	$(CC) -g $(OBJS) -o $(OUT) $(LFLAGS)
+
+# test_streamer: $(OBJS)
+# 	$(CC) -g $(OBJS) -o $(OUT)
+
+# # create/compile the individual files >>separately<<
+# $(OBJDIR)/main.o: main.cpp
+# 	@echo $(FLAGS)
+# 	$(CC) $(FLAGS) main.cpp -o $@
+
+# # $(OBJDIR)/hs_streamer.o: $(SRCDIR)/hs_streamer.c
+# # 	@echo $(FLAGS)
+# # 	$(CC) $(FLAGS) $(SRCDIR)/hs_streamer.c -o $@
+
+# $(OBJDIR)/ff_proxy.o: ff_proxy.c
+# 	@echo $(FLAGS)
+# 	$(CC) $(FLAGS) ff_proxy.c -o $@
+
+# # $(OBJDIR)/hs_readback.o: $(SRCDIR)/hs_readback.c
+# # 	@echo $(FLAGS)
+# # 	$(CC) $(FLAGS) $(SRCDIR)/hs_readback.c -o $@	
+
+# # clean house
+# clean:
+# 	rm -f $(OBJS) $(OUT)
+
+# # run the program
+# run: $(OUT)
+# 	./$(OUT)

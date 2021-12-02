@@ -1,17 +1,47 @@
+
 #include <stdio.h>
 #include <string.h>
-#include <errno.h> //Erno
-#include <sys/stat.h> //mode_t
-#include <assert.h> //assert
+#include <errno.h>
+#include <sys/stat.h>
+#include <assert.h>
+#include <libgen.h>
 
-#include "local_main.h"
+#include "printer.h"
+
 #include "ff_proxy.h"
 
-extern void print(const char *fmt, ...); 
+#include <sys/statvfs.h>
+
+extern char* strdupa(const char*);
 
 uint64_t proxy_drive_size = 32000000000; //32 GB in B
 uint64_t drive_space_consumed = 0;
 uint64_t drive_sapce_remaining = 0;
+
+//https://www.systutorials.com/how-to-get-available-filesystem-space-on-linux-a-c-function-and-a-cpp-example/
+long GetAvailableSpace(const char* path){
+    struct statvfs stat;
+    
+    if (statvfs(path, &stat) != 0) {
+        // error happens, just quits here
+        return -1;
+    }
+
+    // the available size is f_bsize * f_bavail
+    return stat.f_bsize * stat.f_bavail;
+}
+
+long GetTotalSpace(const char* path){
+    struct statvfs stat;
+    
+    if (statvfs(path, &stat) != 0) {
+        // error happens, just quits here
+        return -1;
+    }
+
+    // the total size is f_bsize * f_blocks
+    return stat.f_bsize * stat.f_blocks;
+}
 
 uint32_t get_total_space_KiB(char* volume){
   return proxy_drive_size / 1024;
@@ -39,12 +69,13 @@ int mkpath(char* file_path, mode_t mode) {
 }
 
 FRESULT f_open(FIL *fp, char *path, BYTE mode) {
-  //if(mode && FA_READ == 0)
-  mkpath(path, 0755);
+  if(mode && FA_READ == 0)
+    mkpath(path, 0755);
 
   char strmode[10];
   get_mode_from_byte(strmode, mode);
-  print("Opening '%s' in mode '%s'.\r\n", path, strmode);
+  sprintf(strmode, "%sb", strmode);
+  //print("Opening '%s' in mode '%s'.\r\n", path, strmode);
   fflush(stdout);
   *fp = *fopen(path, strmode);
 
@@ -64,9 +95,8 @@ FRESULT f_write(FIL *fp, void *buff, UINT btw, UINT *bw) {
   if (fp == NULL) {
     return FR_NOT_READY;
   }
-  printf("About to write...\r\n");
+
   *bw = fwrite(buff, 1, btw, fp);
-  printf("Done.\r\n");
   if (*bw == btw)
     return FR_OK;
   else
@@ -83,7 +113,7 @@ FRESULT f_read (
   //size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
   FRESULT res;
   *br = fread(buff, 1, btr, fp);
-
+  //print("f_read():\tbtr: %d\tbr:%d\r\n", btr, *br);
   if(btr == *br)
     return FR_OK;
   else
@@ -160,5 +190,13 @@ void get_mode_from_byte(char* cmode, BYTE mode){
   }
 
   return;
+}
+
+
+FRESULT f_sync(FIL *fp){
+
+  fflush(fp);
+
+  return FR_OK;
 }
 

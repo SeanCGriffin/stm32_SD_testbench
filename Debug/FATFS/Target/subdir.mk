@@ -9,15 +9,15 @@ C_SRCS += \
 ../FATFS/Target/fatfs_platform.c \
 ../FATFS/Target/sd_diskio.c 
 
-OBJS += \
-./FATFS/Target/bsp_driver_sd.o \
-./FATFS/Target/fatfs_platform.o \
-./FATFS/Target/sd_diskio.o 
-
 C_DEPS += \
 ./FATFS/Target/bsp_driver_sd.d \
 ./FATFS/Target/fatfs_platform.d \
 ./FATFS/Target/sd_diskio.d 
+
+OBJS += \
+./FATFS/Target/bsp_driver_sd.o \
+./FATFS/Target/fatfs_platform.o \
+./FATFS/Target/sd_diskio.o 
 
 
 # Each subdirectory must supply rules for building sources it contributes

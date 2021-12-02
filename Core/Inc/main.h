@@ -30,16 +30,13 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "stm32h7xx_hal.h"
 
-
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "types.h"
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
 
 /* USER CODE END ET */
 
@@ -57,7 +54,7 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-SystemTime* get_system_time();
+void print(const char *fmt, ...);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -110,15 +107,15 @@ SystemTime* get_system_time();
 #define LD2_Pin GPIO_PIN_7
 #define LD2_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-
-#define GREEN_LED_PORT GPIOB
-#define GREEN_LED_PIN GPIO_PIN_0
-#define RED_LED_PORT LD3_GPIO_Port
-#define RED_LED_PIN LD3_Pin
-#define BLUE_LED_PORT LD2_GPIO_Port
-#define BLUE_LED_PIN LD2_Pin
-
-
+#define PLATFORM_NUCLEO
+#ifdef PLATFORM_NUCLEO
+	#define GREEN_LED_PORT GPIOB
+	#define GREEN_LED_PIN GPIO_PIN_0
+	#define RED_LED_PORT LD3_GPIO_Port
+	#define RED_LED_PIN LD3_Pin
+	#define BLUE_LED_PORT LD2_GPIO_Port
+	#define BLUE_LED_PIN LD2_Pin
+#endif
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
