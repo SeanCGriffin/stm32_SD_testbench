@@ -120,7 +120,7 @@ namespace hitspool {
     std::string MPEHit::tostring(){
         char buffer[1024];        
         sprintf(buffer, "MPEHit info:\r\n"
-                "\t launch_t:    0x%8d\r\n"
+                "\t launch_t:    0x%8X\r\n"
                 "\t tdc:         0x%8X\r\n"
                 "\t nsamples:    0x%8X\r\n",
                 this->launch_time,

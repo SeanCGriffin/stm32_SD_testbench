@@ -190,7 +190,7 @@ STREAMER_RC streamer::read_next_hit(FIL *file, PayloadType_t *type, u8* hitbuffe
      */
 
      FRESULT fres; 
-     STREAMER_RC SMR_RC;
+     STREAMER_RC SMR_RC = STREAMER_RC_OK;
      u8 lead[sizeof(SPEHit)]; //this is the size of a SPEHit and MPEHit base unit. 
      u8 data[1024]; //FIXME: Make this match the maximum number of samples in an MPEHit.
      UINT br = 0;
@@ -216,6 +216,8 @@ STREAMER_RC streamer::read_next_hit(FIL *file, PayloadType_t *type, u8* hitbuffe
 
      size_t s = 0;
      u16 nsamples = 0;
+     MPEHit* mpe;
+     SPEHit* spe;
      switch(*type){
         case PL_SPE:
             s = sizeof(SPEHit); 
@@ -242,15 +244,15 @@ STREAMER_RC streamer::read_next_hit(FIL *file, PayloadType_t *type, u8* hitbuffe
                 return STREAMER_RC_DISK_ERR;
              }            
             hitbuffer = (u8*)malloc(s);
-            memcpy(hitbuffer, )
+            memcpy(hitbuffer, data, s);
+            mpe = (MPEHit*)hitbuffer;
+            print("%s\r\n", mpe->tostring().c_str());
+            mpe->print_samples(200);
         
             SMR_RC = STREAMER_RC_OK;
             break;
-        
-        default:
-            SMR_RC = STREAMER_RC_DISK_ERR;
      }
-     
+     print("%d\r\n", SMR_RC);
      return SMR_RC;
 
 }
@@ -285,7 +287,7 @@ G_STATUS hs_hit_io_unit_test(){
     SPEHit *spe_pattern = (SPEHit *)pattern; // new SPEHit(0xABCD, 0x5, 0xA, 0xF);
     SPEHit *speh = new SPEHit(0xABCD, 0x5, 0xA, 0xF);
 
-    MPEHit *mpeh = new (nsamples) MPEHit(0xAAAABBBB, 0x2, 2, (u8 *)waveform_buffer);
+    MPEHit *mpeh = new (nsamples) MPEHit(0xCDEF, 0x4, 2, (u8 *)waveform_buffer);
     //mpeh->print_samples(5);
     // u8* hitbytes = (u8*)malloc(mpeh->calc_size() + speh->calc_size());
     // memcpy(hitbytes, (u8*)mpeh, mpeh->calc_size());
@@ -334,9 +336,9 @@ G_STATUS hs_hit_io_unit_test(){
     print("Reading hits...\r\n");
     print("-----------------------------------\r\n");
 
-    STREAMER_RC read_status;
+    STREAMER_RC read_status = STREAMER_RC_OK;
     PayloadType_t next_hit_type;
-    u8 *next_hit_contants;
+    u8 *next_hit_contants = NULL;
     u8 rbuff[1024];
      UINT br = 0;   
      UINT btr = 6; //or sizeof(MPEHit)
@@ -348,15 +350,17 @@ G_STATUS hs_hit_io_unit_test(){
         if (read_status != STREAMER_RC_OK) {
             if (read_status == STREAMER_RC_EOF){
                 print("Reached EOF; exiting read.\r\n");
-            }
-            else{
+            } else {
                 print("Streamer exited with code %d\r\n", read_status);
-             
             }
+
             break;
+        } else {
+            nhits_read++;       
         }
-        free(next_hit_contants);
-        nhits_read++;
+        if(next_hit_contants != NULL)
+            free(next_hit_contants);
+        
     }
     if(nhits_read == nhits_written)
         return G_OK;
