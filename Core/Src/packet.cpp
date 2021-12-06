@@ -88,8 +88,9 @@ namespace hitspool {
         free(this);
     }
 
+    //Overload the new operator so that the malloc will handle 
     void* MPEHit::operator new(size_t size, u16 nsamples){
-        void* p = ::operator new(size + nsamples * sizeof(u8));     
+        void* p = ::operator new(size + 2*nsamples * sizeof(u16));     
 
         return p;
     };
@@ -114,7 +115,8 @@ namespace hitspool {
 
 
     size_t MPEHit::calc_size(){
-        return sizeof(MPEHit) + sizeof(u16) * (2*this->nsamples);
+        //-1 is so we don't double count the first byte. 
+        return sizeof(MPEHit) + sizeof(u16) * (2*this->nsamples) -1;
     }
 
     std::string MPEHit::tostring(){
@@ -131,10 +133,10 @@ namespace hitspool {
 
     }
 
-    MPETest::MPETest(u64 launch_time, u8 tdc, u16 nsamples, u8 *waveform) : Hit(PL_MPE, launch_time, tdc){
-        this->nsamples = nsamples;
+    // MPETest::MPETest(u64 launch_time, u8 tdc, u16 nsamples, u8 *waveform) : Hit(PL_MPE, launch_time, tdc){
+    //     this->nsamples = nsamples;
 
-    }
+    // }
 
     //WUBuffer constructor/destructor
     WUBuffer::WUBuffer(u16 size, u16 nhits, u8* data){

@@ -27,8 +27,7 @@
 
 
 //Main run stuff
-
 void run_SDMMC_testbench();
-G_STATUS hs_hit_io_unit_test();
+
 
 #endif /* INC_RUN_H_ */

@@ -13,8 +13,11 @@
 
 #include <cstring>
 #include <string>
-#include <new>
+//#include <new>
 
+extern "C" {
+	extern void print(const char *fmt, ...);
+}
 namespace hitspool {
 
 
@@ -32,7 +35,7 @@ template <class T>
         	this->PMT = PMT;
         	this->trecv = trecv;
             this->hit = (T*)malloc(h->calc_size());
-            memcpy(this->hit, h, h->calc_size());
+            memcpy((void*)this->hit, (void*)h, h->calc_size());
         };
 
         ~hitpacket(){
@@ -103,22 +106,22 @@ class __attribute__ ((__packed__)) MPEHit : public Hit {
 
 };
 
-class __attribute__ ((__packed__)) MPETest : public Hit {
+// class __attribute__ ((__packed__)) MPETest : public Hit {
 
-	public:
-		u16 nsamples : 16;
-		u8 waveform[1];
+// 	public:
+// 		u16 nsamples : 16;
+// 		u8 waveform[1];
 
-		MPETest(u64 launch_time, u8 tdc, u16 nsamples, u8 *waveform);
-		~MPETest();
+// 		MPETest(u64 launch_time, u8 tdc, u16 nsamples, u8 *waveform);
+// 		~MPETest();
 
-		void* operator new(size_t size, size_t nsamples){
-        	//printf("Overriding new operator; size is %d...%d\r\n", size, nsamples);
-	        void* p = ::operator new(size + nsamples * sizeof(u8));		
+// 		void* operator new(size_t size, size_t nsamples){
+//         	//printf("Overriding new operator; size is %d...%d\r\n", size, nsamples);
+// 	        void* p = ::operator new(size + nsamples * sizeof(u8));		
 
-	        return p;
-	    };
-};
+// 	        return p;
+// 	    };
+// };
 
 class __attribute__ ((__packed__)) WUBuffer {
 

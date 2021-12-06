@@ -86,7 +86,6 @@ typedef enum {
 long GetAvailableSpace(const char* path);
 long GetTotalSpace(const char* path);
 
-
 int mkpath(char* file_path, mode_t mode);
 FRESULT f_open(FIL *fp, char *path, BYTE mode);
 FRESULT f_write(FIL *fp, void *buff, UINT btw, UINT *bw);

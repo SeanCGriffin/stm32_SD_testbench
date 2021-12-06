@@ -45,7 +45,7 @@ int main(void) {
     G_STATUS gres = G_NOTOK;
     gres = hs_hit_io_unit_test();
     print("hs_unit_write_loop()\t %s (%d)\r\n", gres == G_OK ? "PASSED" : "FAILED", gres);
-
+    return 0;
 	// s->read_hit();
 
 	// print("Hit: %d\r\n", sizeof(Hit));
@@ -53,26 +53,27 @@ int main(void) {
 	// print("MPEHit: %d\r\n", sizeof(MPEHit));
 	// mpep->hit->print_samples(100);
 
-	struct statvfs fiData;
+	struct statvfs fs_buffer;
 
-	// //Lets loopyloop through the argvs
-	//   char path[] = "/";
-	//   if((statvfs(path,&fiData)) < 0 ) {
-	//       print("Failed to stat %s\r\n", path);
-	//   } else {
-	//       //cout << "\nDisk: " <<  argv[i];
-	//       print("Block size:      0x%8X\r\n", fiData.f_frsize);
-	//       print("Total no blocks: 0x%8X\r\n", fiData.f_blocks);
-	//       print("Free blocks:     0x%8X\r\n", fiData.f_bfree);
-	//       unsigned long long total_space = ((unsigned long long)fiData.f_blocks
-	//       * (unsigned long long)fiData.f_frsize)/1.e9; unsigned long long
-	//       free_space = ((unsigned long long)fiData.f_bfree  * (unsigned long
-	//       long)fiData.f_frsize)/1.e9; print("Total size:      %lu\r\n",
-	//       total_space); print("Free space:      %lu\r\n", free_space);
-	//   }
+    const unsigned int GB = (1024 * 1024) * 1024;
 
-	// print("Disk space available/total: %u/%u GB\r\n",
-	// GetAvailableSpace("/")/1024/1024/1024, GetTotalSpace("/")/1024/1024/1024);
+    char dirpath[1024];
+    sprintf(dirpath, "/Users/sgriffin");
+    int ret = statvfs(dirpath, &fs_buffer);
+
+    if (!ret) {
+        double blocks = fs_buffer.f_blocks;
+        double total = (double)(fs_buffer.f_blocks * fs_buffer.f_frsize) / GB;
+        double available = (double)(fs_buffer.f_bfree * fs_buffer.f_frsize) / GB;
+        double used = total - available;
+        double usedPercentage = (double)(used / total) * (double)100;
+        printf("Blocks:          %8.3f\r\n", blocks);
+        printf("Total:           %8.3f --> %.0f\n", total, total);
+        printf("Available:       %8.3f --> %.0f\n", available, available);
+        printf("Used:            %8.3f --> %.0f\n", used, used);
+        printf("Used Percentage: %8.3f --> %.0f\n", usedPercentage, usedPercentage);
+    }
+
 
 	print("Done.\r\n");
 }

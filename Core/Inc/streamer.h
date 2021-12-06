@@ -90,10 +90,6 @@ namespace hitspool {
             template <typename T> u32 add_hit(T* hit_packet){
                 u8 PMT = hit_packet->PMT; 
                 u16 write_size = hit_packet->hit->calc_size();
-                PayloadType_t type = hit_packet->hit->pl_type;
-
-                //print("Current hit type: %s size: %d\tlaunch: 0x%8X\n", PLNameText[type], write_size, hit_packet->hit->launch_time);
-                
                 memcpy(write_head[PMT], (u8*)hit_packet->hit, write_size);
                 write_head[PMT]+=write_size;
                 n_consumed[PMT]+=write_size;
@@ -106,8 +102,7 @@ namespace hitspool {
             //https://stackoverflow.com/questions/7349689/how-to-print-using-cout-a-number-in-binary-form
             //Useful for presenting bytes as strings.
             template<typename T>
-            static std::string toBinaryString(const T& x)
-            {
+            static std::string toBinaryString(const T& x){
                 std::stringstream ss;
                 ss << std::bitset<sizeof(T) * 8>(x);
                 return ss.str();

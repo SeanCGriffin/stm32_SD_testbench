@@ -28,7 +28,7 @@
 #include "packet.h"
 
 #include <cstdio>//sprintf
-#include <new>
+
 
 using namespace hitspool;
 
@@ -74,12 +74,8 @@ void run_SDMMC_testbench(){
 	//f_ls(fs_buffer);
     G_STATUS gres = G_NOTOK;
 
-
-
     gres = hs_hit_io_unit_test();
     print("hs_unit_write_loop()\t %s (%d)\r\n", gres == G_OK ? "PASSED" : "FAILED", gres);
-
-
 
 	print("Unmounting filesystem.\r\n");
 	sprintf(fs_buffer, "/");
@@ -92,4 +88,4 @@ void run_SDMMC_testbench(){
 
 }
 
-G
+
