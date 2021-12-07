@@ -10,6 +10,7 @@ SRCS := main.cpp\
 		printer.c\
 		streamer.cpp\
 		packet.cpp\
+		hs_time.cpp
 
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
@@ -61,10 +62,10 @@ MKDIR_P ?= mkdir -p
 # run the program
 .PHONY: run
 run: $(BUILD_DIR)/$(TARGET_EXEC)
-	./$(BUILD_DIR)/$(TARGET_EXEC)
+	./$(BUILD_DIR)/$(TARGET_EXEC) $(PWD)
 	@echo "\n\n"
-	#@echo "File contents:"
-	#@cat hitspool/*/*.spool
+	# @echo "File contents:"
+	# @cat hitspool/*/*.spool
 	@echo "File sizes:"
 	@ls -lh hitspool/*/*.spool
 

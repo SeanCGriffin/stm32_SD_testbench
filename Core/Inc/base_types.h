@@ -33,12 +33,12 @@ typedef enum {
 	G_NOTOK
 } G_STATUS;
 
-typedef enum {
-	STREAMER_RC_OK, 
-	STREAMER_RC_EOF,
-	STREAMER_RC_DISK_ERR,
-	STEAMER_RC_TYPE_ERR
-} STREAMER_RC;
+//typedef enum {
+//	STREAMER_RC_OK,
+//	STREAMER_RC_EOF,
+//	STREAMER_RC_DISK_ERR,
+//	STEAMER_RC_TYPE_ERR
+//} STREAMER_RC;
 
 typedef struct SystemTime{
 //	uint64_t full;

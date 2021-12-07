@@ -37,6 +37,9 @@ namespace hitspool {
 
     G_STATUS hs_hit_io_unit_test();
 
+    //FIXME: Put this in its own library so we can tie it to the ISM clock?
+    u64 get_system_time();
+
     class streamer {
 
         private:
@@ -46,6 +49,8 @@ namespace hitspool {
             u16 nhits_inbuff[NUM_PMT];
 
             //File handlers
+            //FIXME: Will need to segregate readback and writer?
+
             char live_filenames[NUM_PMT][256]; //Filenames.
             bool handler_active[NUM_PMT]; //Is file actively being written to?
             bool handler_open[NUM_PMT];   //Is the file open?            
@@ -67,17 +72,15 @@ namespace hitspool {
             bool buffer_full[NUM_PMT]; //Is the file's I/O buffer full / past threshold? 
 
             //Byte trackers.            
-            UINT n_written[NUM_PMT];    //Number of bytes written in most recent output operation.
+            UINT n_written[NUM_PMT];         //Number of bytes written in most recent output operation.
             u64 n_written_thisfile[NUM_PMT]; //Total number of bytes written to the active file handles. 
-            u64 n_written_tot_PMT[NUM_PMT]; //Sum total number of bytes written for a given PMT.
-            u64 total_bytes_written;    //Sum total of number of bytes written to all files. 
-
-            
+            u64 n_written_thisPMT[NUM_PMT];  //Sum total number of bytes written for a given PMT.
+            u64 total_bytes_written;         //Sum total of number of bytes written to all files. 
 
             u64 bytes_avail; //Bytes available in filesystem.
             u64 bytes_total; //Full size of available filesystem (bytes)
-
             
+            //FIXME: Probably add filesize trackers. 
 
         	streamer();
         	~streamer(); //FIXME: Figure out why this was considered virtual.
@@ -85,16 +88,17 @@ namespace hitspool {
         	//Hit buffers and file I/O initialization things.
         	void init_write_heads();
             void print_buffer_heads();
-        	void init_file_handlers(u32 inittime);
+        	void init_file_handlers(u64 inittime);
+            void init_io_buffers();
         	void flush_file_handlers();
         	void close_file_handlers();
         	void fstat_file_handlers();
             void print_IO_stats();
         	void print_IO_handlers();
 
-            STREAMER_RC read_next_hit(FIL* file, PayloadType_t *type, u8* hitbuffer);
+            Streamer_RC_t read_next_hit(FIL* file, PayloadType_t *type, u8* hitbuffer);
 
-            u32 check_and_write_buffer(u8 PMT, bool force);            
+            FRESULT check_and_write_buffer(u8 PMT, bool force);            
 
             template <typename T> u32 add_hit(T* hit_packet){
                 u8 PMT = hit_packet->PMT; 
@@ -116,11 +120,6 @@ namespace hitspool {
                 ss << std::bitset<sizeof(T) * 8>(x);
                 return ss.str();
             }
-            
-
-            //FIXME: Put this in its own library so we can tie it to the ISM clock?
-            u64 get_system_time();
-        	
 
     };
 

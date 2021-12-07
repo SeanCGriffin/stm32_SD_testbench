@@ -19,6 +19,11 @@ using namespace hitspool;
 
 int main(int argc, char *argv[]){
 
+	if(argc != 2){
+		print("Usage: %s <base_directory>", argv[0]);
+		return 1;
+	}
+	char* basepath = argv[1];
 	// int retVal;
 	// FILE *fp;
 	// char buffer[] = "Writing to a file using fwrite.";
@@ -43,7 +48,7 @@ int main(int argc, char *argv[]){
 
 	// return 0;
 
-	char test_filename[1024];
+	// char test_filename[1024];
 
 	// FIL *fp;
 	// fp = fopen("test.txt", "w+");
@@ -52,35 +57,35 @@ int main(int argc, char *argv[]){
 
 	// fflush(stdout);
 
-	u32 j = 0;
-	// fwrite(test_filename, 1, 10, fp);
-	// print("written\r\n");
-	// fclose(fp);
+	// u32 j = 0;
+	// // fwrite(test_filename, 1, 10, fp);
+	// // print("written\r\n");
+	// // fclose(fp);
 
-	FIL *ff[5];
-	// for (int i = 0; i < 5; i++)
-	// 	ff[i] = (FILE *)malloc(sizeof(FILE *) * 5);
+	// FIL *ff[5];
+	// // for (int i = 0; i < 5; i++)
+	// // 	ff[i] = (FILE *)malloc(sizeof(FILE *) * 5);
 
-	sprintf(test_filename, "test.txt");
+	// sprintf(test_filename, "test.txt");
 
-	// This function has the right signiature.
-	f_open(&ff[0], test_filename, get_mode_from_str((char *)"w+"));
-	// ff[0] = *fopen(test_filename, "w+");
+	// // This function has the right signiature.
+	// f_open(&ff[0], test_filename, get_mode_from_str((char *)"w+"));
+	// // ff[0] = *fopen(test_filename, "w+");
 
-	// This is standard function call.
-	fwrite(test_filename, 1, 10, ff[0]);
+	// // This is standard function call.
+	// fwrite(test_filename, 1, 10, ff[0]);
 
-	print("written\t fwrite()\r\n");
-	f_write(&ff[0], test_filename, 10, &j);
-	print("written\t f_write()\r\n");
-	f_close(&ff[0]);
-	print("%d\r\n", j);
+	// print("written\t fwrite()\r\n");
+	// f_write(&ff[0], test_filename, 10, &j);
+	// print("written\t f_write()\r\n");
+	// f_close(&ff[0]);
+	// print("%d\r\n", j);
 
 	// return 0;
 	
 	double available_space, total_space;
-	available_space = (double)dir_get_available("/home/sean");
-	total_space = (double)dir_get_space("/home/sean");
+	available_space = (double)dir_get_available(basepath);
+	total_space = (double)dir_get_space(basepath);
 	print("Starting disk space: %8.3f/%8.3f\r\n", available_space/MB, total_space/MB);
 	G_STATUS gres = G_NOTOK;
 	gres = hs_hit_io_unit_test();

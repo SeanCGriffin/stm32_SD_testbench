@@ -5,10 +5,11 @@
  *      Author: sgriffin
  */
 #include <cstdio>
-#include <cstdlib> //malloc, free
+#include <cstdlib> //malloc, free, rand
 #include <cstring>
-#include <ctime>
 
+
+//FIXME: hs prefix on packages? directory?
 #include "packet.h" //SPE/MPE/WUBPacket contents.
 #include "streamer.h"
 
@@ -34,25 +35,23 @@ const char *PLNameText[] = {
 };
 #undef REGISTER_ENUM
 
+#define REGISTER_ENUM(x) #x,
+const char *StreamerRCNameText[] = {
+#include "steamer_rc_names.h"
+    "INVALID"
+
+};
+#undef REGISTER_ENUM
+
 namespace hitspool {
 
 // streamer class members
 
 streamer::streamer() {
 
-	for (int i = 0; i < NUM_PMT; i++) {
-		nhits_inbuff[i] = 0;
-		sprintf(live_filenames[i], "NULL");
-		handler_active[i] = false;
-		handler_open[i] = false;
+    init_io_buffers();
+    init_write_heads();
 
-		n_consumed[i] = 0;
-		buffer_full[i] = false;
-
-		n_written[i] = 0;
-		n_written_tot[i] = 0;
-		total_bytes_written = 0;
-	}
 }
 
 streamer::~streamer() {
@@ -63,6 +62,24 @@ streamer::~streamer() {
 	// free(wubp);
 }
 
+void streamer::init_io_buffers(){
+    for (int i = 0; i < NUM_PMT; i++) {
+        nhits_inbuff[i] = 0;
+        sprintf(live_filenames[i], "NULL");
+        handler_active[i] = false;
+        handler_open[i] = false;
+
+        n_consumed[i] = 0;
+        buffer_full[i] = false;
+
+        n_written[i] = 0; 
+        n_written_thisfile[i] = 0;
+        n_written_thisPMT[i] = 0;
+
+        total_bytes_written = 0;
+    }
+}
+
 void streamer::init_write_heads() {
 	for (int i = 0; i < NUM_PMT; i++) {
 		sprintf((char *)write_buff[i], "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
@@ -71,36 +88,46 @@ void streamer::init_write_heads() {
 	}
 }
 
-// Print the first 12 bytes of the write buffer and the write head.
-void streamer::print_buffer_heads() {
-	print("Buffer contents\r\n");
-	print("-----------------------------------\r\n");
-	char buff[6];
-	for (int i = 0; i < NUM_PMT; i++) {
-		print("PMT%02d:\r\n", i);
-		print("Address of buffer[%02d] is %p\n", i, (void *)write_buff[i]);
-		print("Address of head[%02d]   is %p\n", i, (void *)write_head[i]);
-		memcpy(buff, write_head[i], 6);
-		print("\tBuffer: %s\r\n"
-			  "\tHead:   %s\r\n",
-			  write_buff[i], buff);
-	}
-}
-
-void streamer::init_file_handlers(u32 inittime) {
+void streamer::init_file_handlers(u64 inittime) {
+    //Check if any PMTs are already open; if so close them. 
+    for(int i = 0; i < NUM_PMT; i++){
+        if(handler_open[i]){
+            close_file_handlers();
+            break; //All four happen at the same time.
+        }
+    }
 
 	for (int i = 0; i < NUM_PMT; i++) {
 		nhits_inbuff[i] = 0;
 		handler_active[i] = FALSE;
 		buffer_full[i] = FALSE;
-		sprintf(live_filenames[i], "hitspool/PMT%02d/0x%08lX.spool", i, inittime);
+        //Filename is inittime/1000000, i.e. seconds.
+		sprintf(live_filenames[i], "hitspool/PMT%02d/0x%08lX.spool", i, inittime/1000000);
 
 		f_op_res[i] =
 			f_open(&file_handlers[i], live_filenames[i], 
 				FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
 		print("PMT%02d file opened with fres=(%d)\r\n", i, f_op_res[i]);
+        handler_open[i] = true;
 	}
 	// print("\n");
+}
+
+
+// Print the first 12 bytes of the write buffer and the write head.
+void streamer::print_buffer_heads() {
+    print("Buffer contents\r\n");
+    print("-----------------------------------\r\n");
+    char buff[6];
+    for (int i = 0; i < NUM_PMT; i++) {
+        print("PMT%02d:\r\n", i);
+        print("Address of buffer[%02d] is %p\n", i, (void *)write_buff[i]);
+        print("Address of head[%02d]   is %p\n", i, (void *)write_head[i]);
+        memcpy(buff, write_head[i], 6);
+        print("\tBuffer: %s\r\n"
+              "\tHead:   %s\r\n",
+              write_buff[i], buff);
+    }
 }
 
 void streamer::flush_file_handlers() {
@@ -115,10 +142,11 @@ void streamer::close_file_handlers() {
 
 	for (int i = 0; i < NUM_PMT; i++) {
 		f_op_res[i] = f_close(&file_handlers[i]);
+        handler_open[i] = false;
 		if (f_op_res[i] != FR_OK)
 			print("ERROR closing file %s; fres = %d\r\n", live_filenames[i], f_op_res[i]);
 	}
-	print("Done closing all file handlers.\r\n");
+	//print("Done closing all file handlers.\r\n");
 }
 
 void streamer::print_IO_stats() {
@@ -154,8 +182,8 @@ void streamer::print_IO_handlers() {
 	// print_WUBPacket(wubp);
 }
 
-// FIXME: Return an FSTATUS and pass the n_written by reference.
-u32 streamer::check_and_write_buffer(u8 PMT, bool force) {
+FRESULT streamer::check_and_write_buffer(u8 PMT, bool force) {
+
 	if ((n_consumed[PMT] >= TARGET_BLOCKSIZE) || force) {
 		// Kick off the file write process.
 		if (force) {
@@ -169,40 +197,53 @@ u32 streamer::check_and_write_buffer(u8 PMT, bool force) {
 		}
 
 		// do some writing things
-		buffer_full[PMT] = TRUE;
+		buffer_full[PMT]    = TRUE;
 		handler_active[PMT] = TRUE;
 		f_op_res[PMT] =
 			f_write(&file_handlers[PMT], write_buff[PMT], n_consumed[PMT], &n_written[PMT]);
 
 		if (f_op_res[PMT] != FR_OK) {
-			print("Error writing file %s!\r\n", live_filenames[PMT]);
+			print("ERROR writing file %s!\r\n", live_filenames[PMT]);
+            print("Expected write: 0x%04X, actual  write: 0x%04X\r\n", 
+                n_consumed[PMT], n_written[PMT]);
 		}
 
-		n_written_tot[PMT] += n_written[PMT];
-		total_bytes_written += n_written[PMT];
-		print("written: now: 0x%04X\ttot/PMT: 0x%04X\ttot: 0x%04X\r\n", n_consumed[PMT],
-			  n_written[PMT], n_written_tot[PMT]);
+		n_written_thisfile[PMT] += n_written[PMT];
+        n_written_thisPMT[PMT]  += n_written[PMT];
+		total_bytes_written     += n_written[PMT];
+
+        print("\tn_written           = 0x%04x\r\n"
+              "\tn_written_thisfile  = 0x%04x\r\n"
+              "\tn_written_thisPMT   = 0x%04x\r\n"
+              "\ttotal_bytes_written = 0x%04x\r\n",
+              n_written[PMT],
+              n_written_thisfile[PMT],
+              n_written_thisPMT[PMT],
+              total_bytes_written);
 
 		// reset write heads
 		n_consumed[PMT] = 0;
 		write_head[PMT] = write_buff[PMT];
 
 		// release the file handler
-		buffer_full[PMT] = FALSE;
+		buffer_full[PMT]    = FALSE;
 		handler_active[PMT] = FALSE;
+        print("----------------------------\r\n");    
 	}
+    
 
-	return n_written[PMT];
+
+	return f_op_res[PMT];
 }
 
-STREAMER_RC streamer::read_next_hit(FIL *file, PayloadType_t *type, u8 *hitbuffer) {
+Streamer_RC_t streamer::read_next_hit(FIL *file, PayloadType_t *type, u8 *hitbuffer) {
 	/*
 	 * Read the next hit from the filename buffer.
 	 */
 
-    print("read_next_hit()\r\n");
+    //print("read_next_hit()\r\n");
 	FRESULT fres;
-	STREAMER_RC SMR_RC = STREAMER_RC_OK;
+	Streamer_RC_t SMR_RC = STREAMER_RC_OK;
 	u8 lead[sizeof(SPEHit)]; // this is the size of a SPEHit and MPEHit base unit.
 	u8 data[1024];			 // FIXME: Make this match the maximum number of samples in an MPEHit.
 	UINT br = 0;
@@ -238,7 +279,7 @@ STREAMER_RC streamer::read_next_hit(FIL *file, PayloadType_t *type, u8 *hitbuffe
 		memcpy(hitbuffer, lead, s);
 		SMR_RC = STREAMER_RC_OK;
         spe = (SPEHit*)hitbuffer;
-        print("%s\r\n", spe->tostring().c_str());
+        //print("%s\r\n", spe->tostring().c_str());
 		break;
 
 	case PL_MPE:
@@ -260,8 +301,8 @@ STREAMER_RC streamer::read_next_hit(FIL *file, PayloadType_t *type, u8 *hitbuffe
 		hitbuffer = (u8 *)malloc(s);
 		memcpy(hitbuffer, data, s);
 		mpe = (MPEHit *)hitbuffer;
-		print("%s\r\n", mpe->tostring().c_str());
-		mpe->print_samples(200);
+		//print("%s\r\n", mpe->tostring().c_str());
+		//mpe->print_samples(200);
 
 		SMR_RC = STREAMER_RC_OK;
 		break;
@@ -274,30 +315,35 @@ STREAMER_RC streamer::read_next_hit(FIL *file, PayloadType_t *type, u8 *hitbuffe
 }
 
 //Write a pattern of nhits_spe, nhits_mpe, npatterns times.
-G_STATUS hs_write_many_things(u32 nhits_spe, u32 nhits_mpe, u32 npatterns){
+G_STATUS hs_write_pseudo_random_hits(streamer *s, u32 nhits_spe, u32 nhits_mpe, u32 npatterns){
 	print("-----------------------------------\r\n");
 	print("---- hs_write_many_things() ----\r\n");
 	print("-----------------------------------\r\n\n");
-
-	streamer *s = new streamer();
-
-	print("Initializing write buffers, heads... ");
-	s->init_write_heads();
-	print("Done.\r\n");
-	print("Initializing file handlers...\r\n");
-	s->init_file_handlers(0xFF000000);
-	print("File handlers done.\r\n");
-	print("-----------------------------------\r\n");
-	s->print_buffer_heads();
-	print("-----------------------------------\r\n");
-
-	u16 nsamples = 256;
+    srand(0); //seed == 0
+    u16 nsamples = 24;
 	u16 waveform_buffer[2 * nsamples];
-	for (int i = 0; i < 2 * nsamples; i++)
-		waveform_buffer[i] = 2 * nsamples - i;
+	for (int i = 0; i < nsamples; i++){
+		waveform_buffer[i] = 350;
+        waveform_buffer[i + nsamples] = 3700;
+    }
 
+    int offset = rand() % 10; //int between 0 and 10
 	SPEHit *speh = new SPEHit(0xABCD, 0x5, 0xA, 0xF);
 	MPEHit *mpeh = new (nsamples) MPEHit(0xCDEF, 0x4, nsamples, (u8 *)waveform_buffer);	
+}
+
+G_STATUS hs_read_many_things(streamer* s, u32 nhits_spe, u32 nhits_mpe, u32 npatterns){
+    print("-----------------------------------\r\n");
+    print("---- hs_read_many_things() ----\r\n");
+    print("-----------------------------------\r\n\n");
+
+    u16 nsamples = 256;
+    u16 waveform_buffer[2 * nsamples];
+    for (int i = 0; i < 2 * nsamples; i++)
+        waveform_buffer[i] = 2 * nsamples - i;
+
+    SPEHit *speh = new SPEHit(0xABCD, 0x5, 0xA, 0xF);
+    MPEHit *mpeh = new (nsamples) MPEHit(0xCDEF, 0x4, nsamples, (u8 *)waveform_buffer); 
 }
 
 G_STATUS hs_hit_io_unit_test() {
@@ -308,11 +354,11 @@ G_STATUS hs_hit_io_unit_test() {
 
 	streamer *s = new streamer();
 
-	print("Initializing write buffers, heads... ");
-	s->init_write_heads();
-	print("Done.\r\n");
+	// print("Initializing write buffers, heads... ");
+	// s->init_write_heads();
+	// print("Done.\r\n");
 	print("Initializing file handlers...\r\n");
-	s->init_file_handlers(0xFF000000);
+	s->init_file_handlers(get_system_time());
 	print("File handlers done.\r\n");
 	print("-----------------------------------\r\n");
 	s->print_buffer_heads();
@@ -322,19 +368,21 @@ G_STATUS hs_hit_io_unit_test() {
 	u16 nsamples = 10;
 	u16 waveform_buffer[2 * nsamples];
 	for (int i = 0; i < 2 * nsamples; i++)
-		waveform_buffer[i] = 2 * nsamples - i;
+		waveform_buffer[i] = i; //2 * nsamples - i;
 
 	// For testing....
 	char pattern[7];
 	sprintf(pattern, "SCGPHD");
-	SPEHit *spe_pattern = (SPEHit *)pattern; // new SPEHit(0xABCD, 0x5, 0xA, 0xF);
-	SPEHit *speh = new SPEHit(0xABCD, 0x5, 0xA, 0xF);
+	
+
+    SPEHit *spe_pattern = (SPEHit *)pattern;
+	SPEHit *speh = new SPEHit(0xA, 0xB, 0xC, 0xD);
 
 	MPEHit *mpeh = new (nsamples) MPEHit(0xCDEF, 0x4, nsamples, (u8 *)waveform_buffer);
-    print("Test MPEHit predicted size: 0x%X + 0x%X = 0x%X\r\n", 
-    sizeof(MPEHit)-1, 2*nsamples*sizeof(u16), 
-    sizeof(MPEHit)-1 + 2*nsamples*sizeof(u16));
-    print("Test MPEHit calculated size: 0x%X\r\n", mpeh->calc_size());
+    // print("Test MPEHit predicted size: 0x%X + 0x%X = 0x%X\r\n", 
+    // sizeof(MPEHit)-1, 2*nsamples*sizeof(u16), 
+    // sizeof(MPEHit)-1 + 2*nsamples*sizeof(u16));
+    // print("Test MPEHit calculated size: 0x%X\r\n", mpeh->calc_size());
 
 	// mpeh->print_samples(5);
 	//  u8* hitbytes = (u8*)malloc(mpeh->calc_size() + speh->calc_size());
@@ -345,15 +393,12 @@ G_STATUS hs_hit_io_unit_test() {
 	//  //printf("%s\r\n", speh->tostring().c_str());
 
 	hitpacket<SPEHit> *spep = new hitpacket<SPEHit>(0, 0x1234ABCD, speh);
-
 	hitpacket<MPEHit> *mpep = new hitpacket<MPEHit>(0, 0x1234ABCD, mpeh);
 
 	hitpacket<SPEHit> *spep_pattern = new hitpacket<SPEHit>(0, 0x1234ABCD, spe_pattern);
 	spep_pattern->hit->pl_type = PL_SPE;
 
-	// s->add_hit(spep_pattern);
-	// s->add_hit(spep_pattern);
-	int nhits_to_write = 5;
+	int nhits_to_write = 5000;
 	int nhits_written = 0;
 	for (int i = 0; i < nhits_to_write; i++) {
 		spep->hit->tdc++;
@@ -362,12 +407,11 @@ G_STATUS hs_hit_io_unit_test() {
 	}
 
 	
-    for (int i = 0; i < 5; i++){
-        ((u16*)(mpep->hit->waveform))[i%nsamples]+=100;
-        mpep->hit->tdc++; 
-        s->add_hit(mpep); nhits_written++;
-        //print("Added 0x8%X bytes to buffer.\r\n", mpep->hit->calc_size());
-    }
+    // for (int i = 0; i < nhits_to_write; i++){
+    //     ((u16*)(mpep->hit->waveform))[i%nsamples]+=100;
+    //     mpep->hit->tdc++; 
+    //     s->add_hit(mpep); nhits_written++;
+    // }
     
 
 
@@ -389,7 +433,7 @@ G_STATUS hs_hit_io_unit_test() {
 	print("Reading hits...\r\n");
 	print("-----------------------------------\r\n");
 
-	STREAMER_RC read_status = STREAMER_RC_OK;
+	Streamer_RC_t read_status = STREAMER_RC_OK;
 	PayloadType_t next_hit_type;
 	u8 *next_hit_contants = NULL;
 	u8 rbuff[1024];
@@ -425,11 +469,5 @@ G_STATUS hs_hit_io_unit_test() {
 }
 
 
-u64 streamer::get_system_time(){
-	struct timeval time_now{};
-    gettimeofday(&time_now, nullptr);
-    time_t msecs_time = (time_now.tv_sec * 1000) + (time_now.tv_usec / 1000);
 
-    return msecs_time
-}
 } /* namespace hitspool */

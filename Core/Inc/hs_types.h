@@ -15,8 +15,15 @@ typedef enum {
 } PayloadType_t;
 #undef REGISTER_ENUM
 
+#define REGISTER_ENUM(x) x,
+typedef enum {
+    #include "steamer_rc_names.h"
+    RC_INVALID
+} Streamer_RC_t;
+#undef REGISTER_ENUM
+
 //FIXME: move PLNameText[] definition somewhere better. Currently defined in streamer.cpp
 extern const char* PLNameText[];
-
+extern const char* StreamerRCNameText[];
 
 #endif /* INC_HS_TYPES_H_ */
