@@ -5,7 +5,9 @@
 #include <cstdio>
 #include <cstring>
 
+#include "base_types.h"
 extern "C" {
+
 #include "printer.h"
 }
 
@@ -39,6 +41,54 @@ long GetTotalSpace(const char *path) {
 
 	// the total size is f_bsize * f_blocks
 	return stat.f_bsize * stat.f_blocks;
+}
+
+u64 dir_get_available(const char *path){
+  struct statvfs fs_buffer;
+
+  char dirpath[1024];
+  sprintf(dirpath, path);
+  int ret = statvfs(dirpath, &fs_buffer);
+
+  return (u64)(fs_buffer.f_bfree * fs_buffer.f_frsize);
+  // if (!ret) {
+  //   double blocks = fs_buffer.f_blocks;
+  //   double total = (double)(fs_buffer.f_blocks * fs_buffer.f_frsize) / GB;
+  //   double available = (double)(fs_buffer.f_bfree * fs_buffer.f_frsize) / GB;
+  //   double used = total - available;
+  //   double usedPercentage = (double)(used / total) * (double)100;
+  //   printf("Blocks:          %8.3f\r\n", blocks);
+  //   printf("Total:           %8.3f --> %.0f\n", total, total);
+  //   printf("Available:       %8.3f --> %.0f\n", available, available);
+  //   printf("Used:            %8.3f --> %.0f\n", used, used);
+  //   printf("Used Percentage: %8.3f --> %.0f\n", usedPercentage, usedPercentage);
+  // } else {
+  //   print("Error ret = %d\r\n", ret);
+  // }  
+}
+
+u64 dir_get_space(const char *path){
+  struct statvfs fs_buffer;
+
+  char dirpath[1024];
+  sprintf(dirpath, path);
+  int ret = statvfs(dirpath, &fs_buffer);
+
+  return (u64)(fs_buffer.f_blocks * fs_buffer.f_frsize) ;
+  // if (!ret) {
+  //   double blocks = fs_buffer.f_blocks;
+  //   double total = (double)(fs_buffer.f_blocks * fs_buffer.f_frsize) / GB;
+  //   double available = (double)(fs_buffer.f_bfree * fs_buffer.f_frsize) / GB;
+  //   double used = total - available;
+  //   double usedPercentage = (double)(used / total) * (double)100;
+  //   printf("Blocks:          %8.3f\r\n", blocks);
+  //   printf("Total:           %8.3f --> %.0f\n", total, total);
+  //   printf("Available:       %8.3f --> %.0f\n", available, available);
+  //   printf("Used:            %8.3f --> %.0f\n", used, used);
+  //   printf("Used Percentage: %8.3f --> %.0f\n", usedPercentage, usedPercentage);
+  // } else {
+  //   print("Error ret = %d\r\n", ret);
+  // }  
 }
 
 uint32_t get_total_space_KiB(char *volume) { return proxy_drive_size / 1024; }

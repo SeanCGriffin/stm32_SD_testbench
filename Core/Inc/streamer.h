@@ -68,7 +68,8 @@ namespace hitspool {
 
             //Byte trackers.            
             UINT n_written[NUM_PMT];    //Number of bytes written in most recent output operation.
-            u32 n_written_tot[NUM_PMT]; //Total number of bytes written to the active file handles. 
+            u64 n_written_thisfile[NUM_PMT]; //Total number of bytes written to the active file handles. 
+            u64 n_written_tot_PMT[NUM_PMT]; //Sum total number of bytes written for a given PMT.
             u64 total_bytes_written;    //Sum total of number of bytes written to all files. 
 
             
@@ -88,6 +89,7 @@ namespace hitspool {
         	void flush_file_handlers();
         	void close_file_handlers();
         	void fstat_file_handlers();
+            void print_IO_stats();
         	void print_IO_handlers();
 
             STREAMER_RC read_next_hit(FIL* file, PayloadType_t *type, u8* hitbuffer);
@@ -115,6 +117,9 @@ namespace hitspool {
                 return ss.str();
             }
             
+
+            //FIXME: Put this in its own library so we can tie it to the ISM clock?
+            u64 get_system_time();
         	
 
     };

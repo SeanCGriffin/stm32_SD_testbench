@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cstdlib> //malloc, free
 #include <cstring>
+#include <ctime>
 
 #include "packet.h" //SPE/MPE/WUBPacket contents.
 #include "streamer.h"
@@ -118,6 +119,20 @@ void streamer::close_file_handlers() {
 			print("ERROR closing file %s; fres = %d\r\n", live_filenames[i], f_op_res[i]);
 	}
 	print("Done closing all file handlers.\r\n");
+}
+
+void streamer::print_IO_stats() {
+
+	print("I/O stats:\r\n");
+	print("------------------\r\n");
+	for (int i = 0; i < NUM_PMT; i++) {
+		print("PMT%02d:\r\n", i);
+		// print("\tbuffer_full:     %s\r\n", buffer_full[i] ? "TRUE" : "FALSE");
+		// print("\thandler_active:  %s\r\n", handler_active[i] ? "TRUE" : "FALSE");
+		// print("\tactive filename: %s\r\n", live_filenames[i]);
+		print("\t----------------------------\r\n");
+	}
+	print("Total bytes written: 0x%16X\r\n", this->total_bytes_written);
 }
 
 void streamer::print_IO_handlers() {
@@ -258,6 +273,33 @@ STREAMER_RC streamer::read_next_hit(FIL *file, PayloadType_t *type, u8 *hitbuffe
 	return SMR_RC;
 }
 
+//Write a pattern of nhits_spe, nhits_mpe, npatterns times.
+G_STATUS hs_write_many_things(u32 nhits_spe, u32 nhits_mpe, u32 npatterns){
+	print("-----------------------------------\r\n");
+	print("---- hs_write_many_things() ----\r\n");
+	print("-----------------------------------\r\n\n");
+
+	streamer *s = new streamer();
+
+	print("Initializing write buffers, heads... ");
+	s->init_write_heads();
+	print("Done.\r\n");
+	print("Initializing file handlers...\r\n");
+	s->init_file_handlers(0xFF000000);
+	print("File handlers done.\r\n");
+	print("-----------------------------------\r\n");
+	s->print_buffer_heads();
+	print("-----------------------------------\r\n");
+
+	u16 nsamples = 256;
+	u16 waveform_buffer[2 * nsamples];
+	for (int i = 0; i < 2 * nsamples; i++)
+		waveform_buffer[i] = 2 * nsamples - i;
+
+	SPEHit *speh = new SPEHit(0xABCD, 0x5, 0xA, 0xF);
+	MPEHit *mpeh = new (nsamples) MPEHit(0xCDEF, 0x4, nsamples, (u8 *)waveform_buffer);	
+}
+
 G_STATUS hs_hit_io_unit_test() {
 
 	print("-----------------------------------\r\n");
@@ -382,4 +424,12 @@ G_STATUS hs_hit_io_unit_test() {
 		return G_NOTOK;
 }
 
+
+u64 streamer::get_system_time(){
+	struct timeval time_now{};
+    gettimeofday(&time_now, nullptr);
+    time_t msecs_time = (time_now.tv_sec * 1000) + (time_now.tv_usec / 1000);
+
+    return msecs_time
+}
 } /* namespace hitspool */

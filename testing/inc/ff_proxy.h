@@ -1,6 +1,8 @@
 #ifndef __FF_PROXY_H
 #define __FF_PROXY_H
 
+#include "base_types.h"
+
 #include <cstdint>
 #include <cstdio>
 //#include <stdint.h> //uintN_t
@@ -88,6 +90,9 @@ namespace hitspool {
 
 long GetAvailableSpace(const char *path);
 long GetTotalSpace(const char *path);
+
+u64 dir_get_available(const char *path);
+u64 dir_get_space(const char* path);
 
 int mkpath(char *file_path, mode_t mode);
 FRESULT f_open(FIL **fp, char *path, BYTE mode);

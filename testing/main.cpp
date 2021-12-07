@@ -17,7 +17,7 @@ extern "C" {
 
 using namespace hitspool;
 
-int main(void) {
+int main(int argc, char *argv[]){
 
 	// int retVal;
 	// FILE *fp;
@@ -77,11 +77,16 @@ int main(void) {
 	print("%d\r\n", j);
 
 	// return 0;
-
+	
+	double available_space, total_space;
+	available_space = (double)dir_get_available("/home/sean");
+	total_space = (double)dir_get_space("/home/sean");
+	print("Starting disk space: %8.3f/%8.3f\r\n", available_space/MB, total_space/MB);
 	G_STATUS gres = G_NOTOK;
 	gres = hs_hit_io_unit_test();
 	print("hs_unit_write_loop()\t %s (%d)\r\n", gres == G_OK ? "PASSED" : "FAILED", gres);
-	return 0;
+	print("Ending disk space: %8.3f/%8.3f\r\n", available_space/MB, total_space/MB);
+	//return 0;
 	// s->read_hit();
 
 	// print("Hit: %d\r\n", sizeof(Hit));
@@ -89,26 +94,7 @@ int main(void) {
 	// print("MPEHit: %d\r\n", sizeof(MPEHit));
 	// mpep->hit->print_samples(100);
 
-	struct statvfs fs_buffer;
 
-	const unsigned int GB = (1024 * 1024) * 1024;
-
-	char dirpath[1024];
-	sprintf(dirpath, "/Users/sgriffin");
-	int ret = statvfs(dirpath, &fs_buffer);
-
-	if (!ret) {
-		double blocks = fs_buffer.f_blocks;
-		double total = (double)(fs_buffer.f_blocks * fs_buffer.f_frsize) / GB;
-		double available = (double)(fs_buffer.f_bfree * fs_buffer.f_frsize) / GB;
-		double used = total - available;
-		double usedPercentage = (double)(used / total) * (double)100;
-		printf("Blocks:          %8.3f\r\n", blocks);
-		printf("Total:           %8.3f --> %.0f\n", total, total);
-		printf("Available:       %8.3f --> %.0f\n", available, available);
-		printf("Used:            %8.3f --> %.0f\n", used, used);
-		printf("Used Percentage: %8.3f --> %.0f\n", usedPercentage, usedPercentage);
-	}
 
 	print("Done.\r\n");
 }

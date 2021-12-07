@@ -18,6 +18,11 @@ typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
+#define KB (1024)
+#define MB (1024 * KB)
+#define GB (1024 * MB)
+
+
 #define False false
 #define True true
 #define FALSE false
