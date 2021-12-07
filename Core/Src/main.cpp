@@ -157,7 +157,7 @@ int main(void)
 	run_SDMMC_testbench();
 
 
-
+	print("Testbench done.\r\n");
 
 
   /* USER CODE END 2 */

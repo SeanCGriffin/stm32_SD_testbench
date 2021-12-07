@@ -10,8 +10,8 @@
 
 #ifdef PLATFORM_STANDALONE
     #pragma message( "Compiling " __FILE__ " for DESKTOP")
+    #include "ff_proxy.h"
     extern "C" {
-        #include "ff_proxy.h"
         #include "printer.h"
     }
 #else
@@ -51,7 +51,14 @@ namespace hitspool {
             bool handler_open[NUM_PMT];   //Is the file open?            
 
             FRESULT f_op_res[NUM_PMT];  //File operation results. 
-            FIL file_handlers[NUM_PMT]; //Active file handles. 
+
+            #ifdef PLATFORM_STANDALONE
+                #pragma message( "Initializing file_handlers as list of pointers.")
+                FIL *file_handlers[NUM_PMT]; //Active file handles. 
+            #else
+                FIL file_handlers[NUM_PMT]; //Active file handles. 
+            #endif
+            
 
             //File I/O buffers
             u8 write_buff[NUM_PMT][WRITEBUFFER_MAXISIZE]; //Active writing buffer

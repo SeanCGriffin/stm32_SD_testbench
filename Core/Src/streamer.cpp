@@ -15,6 +15,7 @@
 
 #ifdef PLATFORM_STANDALONE
 #pragma message("Compiling " __FILE__ " for DESKTOP")
+#define f_read(a, b, c, d) f_read(&a, b, c, d)
 extern "C" {
 #include "printer.h"
 }
@@ -94,7 +95,8 @@ void streamer::init_file_handlers(u32 inittime) {
 		sprintf(live_filenames[i], "hitspool/PMT%02d/0x%08lX.spool", i, inittime);
 
 		f_op_res[i] =
-			f_open(&file_handlers[i], live_filenames[i], FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
+			f_open(&file_handlers[i], live_filenames[i], 
+				FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
 		print("PMT%02d file opened with fres=(%d)\r\n", i, f_op_res[i]);
 	}
 	// print("\n");
@@ -337,6 +339,7 @@ G_STATUS hs_hit_io_unit_test() {
 	print("-----------------------------------\r\n");
 	print("Opening PMT0 file for reading.\r\n");
 
+
 	FRESULT fres = f_open(&(s->file_handlers[0]), s->live_filenames[0], FA_READ);
 	if (fres != FR_OK)
 		print("Error opening file for reading.\r\n");
@@ -354,7 +357,11 @@ G_STATUS hs_hit_io_unit_test() {
 	int nhits_read = 0;
 	while (1) {
 		// print("Attempting to read hit %d\r\n", nhits_read);
+#ifdef PLATFORM_STANDALONE
+		read_status = s->read_next_hit((s->file_handlers[0]), &next_hit_type, next_hit_contants);
+#else
 		read_status = s->read_next_hit(&(s->file_handlers[0]), &next_hit_type, next_hit_contants);
+#endif
 		if (read_status != STREAMER_RC_OK) {
 			if (read_status == STREAMER_RC_EOF) {
 				print("Reached EOF; exiting read.\r\n");
