@@ -6,7 +6,7 @@ SRC_DIRS ?= .../Core/Src
 INCDIR = ../Core/Inc
 
 SRCS := main.cpp\
-		ff_proxy.c\
+		ff_proxy.cpp\
 		printer.c\
 		streamer.cpp\
 		packet.cpp\
