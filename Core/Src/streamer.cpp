@@ -17,15 +17,19 @@
 
 #ifdef PLATFORM_STANDALONE
 #pragma message("Compiling " __FILE__ " for DESKTOP")
-#define f_read(a, b, c, d) f_read(&a, b, c, d)
-extern "C" {
-#include "printer.h"
+	#define f_read(a, b, c, d) f_read(&a, b, c, d)
+	extern "C" {
+	#include "printer.h"
 }
 #else
 #pragma message("Compiling " __FILE__ " for STM32")
-extern void print(const char *fmt, ...);
+	extern void print(const char *fmt, ...);
 #endif
 
+
+/*
+ * Do the GDC trick to import the enum type names.
+ */
 // https://www.youtube.com/watch?v=iVBCBcEANBc
 #define REGISTER_ENUM(x) #x,
 const char *PLNameText[] = {
@@ -102,7 +106,7 @@ void streamer::init_file_handlers(u64 inittime) {
 		handler_active[i] = FALSE;
 		buffer_full[i] = FALSE;
         //Filename is inittime/1000000, i.e. seconds.
-		sprintf(live_filenames[i], "hitspool/PMT%02d/0x%08lX.spool", i, inittime/1000000);
+		sprintf(live_filenames[i], "hitspool/PMT%02d/0x%08llX.spool", i, (u64)inittime/1000000);
 
 		f_op_res[i] =
 			f_open(&file_handlers[i], live_filenames[i], 
@@ -308,6 +312,8 @@ Streamer_RC_t streamer::read_next_hit(FIL *file, PayloadType_t *type, u8 *hitbuf
 		break;
 
 	default:
+		mpe = NULL;
+		spe = NULL;
 		SMR_RC = STEAMER_RC_TYPE_ERR;
 	}
 	//print("%d\r\n", SMR_RC);
