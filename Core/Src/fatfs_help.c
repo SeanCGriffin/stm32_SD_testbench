@@ -69,7 +69,7 @@ FRESULT f_recursive_rm (
         j = 0;
         do {    /* Make a path name */
             if (i + j >= sz_buff) { /* Buffer over flow? */
-                fr = static_cast<FRESULT>(100); break;    /* Fails with 100 when buffer overflow */
+                fr = 100; break;    /* Fails with 100 when buffer overflow */
             }
             path[i + j] = fno->fname[j];
         } while (fno->fname[j++]);
