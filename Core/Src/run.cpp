@@ -66,12 +66,12 @@ void run_SDMMC_testbench(){
 	sprintf(fs_buffer, "/");
 	fres = f_mount(fs, fs_buffer, 1);
 	if (fres != FR_OK){
-		print("Failed to mount filesystem!!!\r\n");
+		print("Failed to mount filesystem!!! fres=%d\r\n", fres);
 		Error_Handler();
 	}
 	print("Done.\r\n");
-
-	//f_ls(fs_buffer);
+	f_mkdir("/hitspool/");
+	f_ls(fs_buffer);
     G_STATUS gres = G_NOTOK;
 
     gres = hs_hit_io_unit_test();
