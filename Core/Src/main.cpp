@@ -158,6 +158,7 @@ int main(void)
 
 
 	print("Testbench done.\r\n");
+	print("Testbench done.\r\n");
 
 
   /* USER CODE END 2 */
